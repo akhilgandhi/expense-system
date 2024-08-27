@@ -1,0 +1,51 @@
+plugins {
+    id 'jacoco'
+    id "org.sonarqube" version "5.0.0.4638"
+}
+
+allprojects {
+    apply plugin: 'jacoco'
+}
+
+tasks.register('jacocoRootReport', JacocoReport) {
+    sourceDirectories.setFrom(files())
+    classDirectories.setFrom(files())
+    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
+
+    subprojects.each { subproject ->
+        if (subproject.plugins.hasPlugin('java')) {
+            sourceDirectories.from(subproject.sourceSets.main.allSource.srcDirs)
+            classDirectories.from(subproject.sourceSets.main.output)
+        }
+    }
+
+    reports {
+        xml.required = true
+        csv.required = false
+        html.required = true
+    }
+
+    doFirst {
+        executionData = files(executionData.findAll {
+            it.exists()
+        })
+    }
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "expense-system"
+        property "sonar.projectName", "expense-system"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.token", "sqp_42bd4f1aab0d6b440f5ffdbc3eb0d134504ef19f"
+
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.exclusions", "**/com/akhil/microservices/api/**/*.*, **/com/akhil/microservices/core/**/persistence/*.*, **/com/akhil/microservices/util/**/*.*, **/com/akhil/microservices/**/*Config.java, **/com/akhil/microservices/**/*Application.java"
+    }
+}
+
+sonarqube {
+    properties {
+        property "sonar.coverage.jacoco.xmlReportPaths", layout.buildDirectory.file("reports/jacoco/jacocoRootReport/jacocoRootReport.xml").get()
+    }
+}

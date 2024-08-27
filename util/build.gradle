@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.akhil.microservices.util'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    springBootVersion = '3.2.3'
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+test {
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        csv.required = false
+        html.required = true
+    }
+}
+
+// This task will create a Jacoco report that can be consumed by SonarQube
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.7
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+
+    implementation project(':api')
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

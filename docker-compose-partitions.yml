@@ -1,0 +1,136 @@
+services:
+
+  account:
+    build: microservices/account-service
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,streaming_partitioned,streaming_instance_0
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  account-a1:
+    build: microservices/account-service
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,streaming_partitioned,streaming_instance_1
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  expense:
+    build: microservices/expense-service
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,streaming_partitioned,streaming_instance_0
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  expense-e1:
+    build: microservices/expense-service
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,streaming_partitioned,streaming_instance_1
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  dashboard:
+    build: microservices/dashboard-service
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,streaming_partitioned
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      auth-server:
+        condition: service_healthy
+
+  mongodb:
+    image: mongo:6.0.4
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    ports:
+      - "27017:27017"
+    command: mongod
+    healthcheck:
+      test: "mongostat -n 1"
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
+  rabbitmq:
+    image: rabbitmq:3.11.8-management
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
+  eureka:
+    build: spring-cloud/eureka-server
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  gateway:
+    build: spring-cloud/gateway
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    ports:
+      - "8443:8443"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      auth-server:
+        condition: service_healthy
+
+  auth-server:
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    build: spring-cloud/auth-server
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:9999/actuator/health" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60

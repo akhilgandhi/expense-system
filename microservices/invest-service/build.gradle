@@ -1,0 +1,74 @@
+plugins {
+	id 'java'
+	id 'jacoco'
+	id 'org.springframework.boot' version '3.2.3'
+	id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.akhil.microservices.core.invest'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+	mavenCentral()
+}
+
+jar {
+	enabled = false
+}
+
+ext {
+	mapstructVersion = "1.5.3.Final"
+}
+
+jacoco {
+	toolVersion = "0.8.11"
+}
+
+test {
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	reports {
+		xml.required = true
+		csv.required = false
+		html.required = true
+	}
+}
+
+// This task will create a Jacoco report that can be consumed by SonarQube
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			limit {
+				minimum = 0.7
+			}
+		}
+	}
+}
+
+dependencies {
+	implementation project(':api')
+	implementation project(':util')
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+	implementation platform('org.testcontainers:testcontainers-bom:1.15.2')
+	testImplementation 'org.testcontainers:testcontainers'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:mongodb'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
+	compileOnly "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
